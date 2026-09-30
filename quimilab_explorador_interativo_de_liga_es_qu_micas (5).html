@@ -1,0 +1,2348 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuimiLab - Ligações Químicas & Linus Pauling</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      font-family: 'Outfit', sans-serif;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    /* Custom scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.6);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(99, 102, 241, 0.4);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(99, 102, 241, 0.8);
+    }
+    @keyframes electronSea {
+      0%, 100% { transform: translateY(0px) scale(1); opacity: 0.7; }
+      50% { transform: translateY(-4px) scale(1.15); opacity: 1; }
+    }
+    .animate-electron-sea {
+      animation: electronSea 2.5s infinite ease-in-out;
+    }
+    .glow-ionic {
+      box-shadow: 0 0 25px -3px rgba(245, 158, 11, 0.45);
+    }
+    .glow-covalent {
+      box-shadow: 0 0 25px -3px rgba(59, 130, 246, 0.45);
+    }
+    .glow-metallic {
+      box-shadow: 0 0 25px -3px rgba(168, 85, 247, 0.45);
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white pb-16 md:pb-10">
+
+  <!-- Welcome Screen / Splash Modal for Escola Agenor Guerra & Prof. Júlio -->
+  <div id="welcome-modal" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-gradient-to-b from-slate-900 via-slate-900 to-indigo-950 border-2 border-indigo-500/40 rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl shadow-indigo-950/80 text-center relative overflow-hidden">
+      <div class="absolute -top-24 -left-24 w-48 h-48 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-pink-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+      <!-- School & Professor Badge -->
+      <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/15 border border-indigo-400/30 text-indigo-300 text-xs font-semibold uppercase tracking-wider mb-4">
+        <i class="fa-solid fa-graduation-cap text-amber-400 text-sm"></i>
+        <span>Escola Agenor Guerra</span>
+      </div>
+
+      <!-- Icon and Titles -->
+      <div class="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-3 rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/40">
+        <i class="fa-solid fa-atom text-white text-3xl sm:text-4xl animate-spin" style="animation-duration: 12s;"></i>
+      </div>
+
+      <h2 class="text-xl sm:text-2xl font-black text-white tracking-tight">
+        QuimiLab Interativo
+      </h2>
+      <p class="text-xs sm:text-sm font-medium text-indigo-300 mt-1">
+        Aulas de Química • <span class="text-amber-300 font-bold">Prof. Júlio</span>
+      </p>
+
+      <p class="text-xs text-slate-300 mt-3 leading-relaxed bg-slate-950/50 p-3 rounded-xl border border-slate-800">
+        Bem-vindo, estudante! Explore as <strong>ligações químicas</strong> (iônica, covalente e metálica), descubra a <strong>regra do octeto</strong>, visualize <strong>moléculas em 3D</strong> e consulte o <strong>diagrama de Linus Pauling</strong>.
+      </p>
+
+      <!-- Student Name Input -->
+      <div class="mt-4 text-left">
+        <label for="student-name-input" class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold block mb-1">
+          Digite seu nome (opcional):
+        </label>
+        <div class="relative">
+          <i class="fa-solid fa-user absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+          <input id="student-name-input" type="text" placeholder="Ex: Maria Clara" maxlength="25"
+            class="w-full bg-slate-950 border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition">
+        </div>
+      </div>
+
+      <!-- Start Button -->
+      <button onclick="enterLaboratory()" class="w-full mt-5 py-3.5 px-4 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white font-bold text-sm sm:text-base rounded-2xl shadow-lg shadow-indigo-600/40 active:scale-95 transition flex items-center justify-center gap-2">
+        <span>Iniciar Laboratório Móvel</span>
+        <i class="fa-solid fa-arrow-right"></i>
+      </button>
+
+      <div class="mt-3 flex items-center justify-center gap-2 text-[11px] text-slate-400">
+        <i class="fa-solid fa-mobile-screen-button text-indigo-400"></i>
+        <span>100% Otimizado para Celular & Computador</span>
+      </div>
+    </div>
+  </div>
+
+  <header class="sticky top-0 z-40 backdrop-blur-md bg-slate-900/90 border-b border-slate-800 px-3 sm:px-4 lg:px-8 py-2.5 transition-all">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
+      <div class="flex items-center space-x-2.5 sm:space-x-3">
+        <button onclick="openWelcomeInfo()" title="Ver informações da turma" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/30 shrink-0">
+          <i class="fa-solid fa-atom text-white text-base sm:text-xl"></i>
+        </button>
+        <div class="min-w-0">
+          <div class="flex items-center gap-1.5">
+            <h1 class="text-base sm:text-lg font-bold tracking-tight text-white truncate">
+              QuimiLab
+            </h1>
+            <span class="bg-indigo-500/20 text-indigo-300 text-[10px] font-bold px-1.5 py-0.5 rounded border border-indigo-500/30 whitespace-nowrap">
+              E.A.G.
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-400 truncate">
+            Escola Agenor Guerra • <strong class="text-amber-300">Prof. Júlio</strong>
+          </p>
+        </div>
+      </div>
+
+      <!-- Gamification Bar -->
+      <div class="flex items-center gap-2 sm:gap-4 bg-slate-800/80 px-2.5 sm:px-4 py-1.5 rounded-full border border-slate-700/60 shadow-inner">
+        <!-- Rank -->
+        <div class="flex items-center space-x-1.5">
+          <div class="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-xs border border-amber-500/30">
+            <i class="fa-solid fa-trophy text-[11px]"></i>
+          </div>
+          <div class="text-left hidden xs:block">
+            <div id="player-label" class="text-[9px] uppercase tracking-wider text-slate-400 font-medium truncate max-w-[70px]">Aluno</div>
+            <div id="player-rank" class="text-[11px] sm:text-xs font-bold text-amber-300 truncate max-w-[95px]">Iniciante</div>
+          </div>
+        </div>
+
+        <div class="h-5 w-px bg-slate-700"></div>
+
+        <!-- XP & Level Progress -->
+        <div class="flex items-center space-x-1.5 sm:space-x-2">
+          <div class="text-right">
+            <div id="player-xp" class="text-xs font-mono font-bold text-emerald-400">0 XP</div>
+          </div>
+          <div class="w-14 sm:w-24 bg-slate-900 rounded-full h-2 overflow-hidden border border-slate-700 hidden sm:block">
+            <div id="player-progress" class="bg-gradient-to-r from-emerald-500 to-cyan-400 h-full w-0 transition-all duration-500"></div>
+          </div>
+        </div>
+
+        <div class="h-5 w-px bg-slate-700"></div>
+
+        <!-- Sound Toggle & Reset -->
+        <div class="flex items-center space-x-0.5">
+          <button id="sound-btn" onclick="toggleAudio()" title="Alternar Som" class="p-1.5 rounded-lg text-slate-400 hover:text-white active:scale-95 transition">
+            <i id="sound-icon" class="fa-solid fa-volume-high text-xs"></i>
+          </button>
+          <button onclick="resetLab()" title="Limpar Bancada" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 active:scale-95 transition">
+            <i class="fa-solid fa-rotate-right text-xs"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <nav class="max-w-7xl mx-auto w-full px-3 sm:px-4 lg:px-8 mt-3 hidden md:block">
+    <div class="flex border-b border-slate-800 space-x-2 sm:space-x-4 overflow-x-auto pb-1 text-sm font-medium">
+      <button onclick="switchTab('lab')" id="tab-lab" class="tab-button border-b-2 border-indigo-500 text-indigo-400 px-3 py-2 flex items-center gap-2 whitespace-nowrap transition">
+        <i class="fa-solid fa-flask-vial"></i> Laboratório de Ligações
+      </button>
+      <button onclick="switchTab('pauling')" id="tab-pauling" class="tab-button border-b-2 border-transparent text-slate-400 hover:text-slate-200 px-3 py-2 flex items-center gap-2 whitespace-nowrap transition">
+        <i class="fa-solid fa-diagram-project"></i> Diagrama de Linus Pauling
+      </button>
+      <button onclick="switchTab('missions')" id="tab-missions" class="tab-button border-b-2 border-transparent text-slate-400 hover:text-slate-200 px-3 py-2 flex items-center gap-2 whitespace-nowrap transition">
+        <i class="fa-solid fa-bullseye"></i> Missões de Síntese
+        <span id="badge-missions" class="bg-indigo-500/20 text-indigo-300 text-xs px-2 py-0.5 rounded-full border border-indigo-500/30">0/6</span>
+      </button>
+      <button onclick="switchTab('theory')" id="tab-theory" class="tab-button border-b-2 border-transparent text-slate-400 hover:text-slate-200 px-3 py-2 flex items-center gap-2 whitespace-nowrap transition">
+        <i class="fa-solid fa-book-bookmark"></i> Compêndio & Octeto
+      </button>
+    </div>
+  </nav>
+
+  <!-- Notification Toast Container -->
+  <div id="toast-container" class="fixed bottom-16 md:bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- MAIN VIEWPORT CONTAINER -->
+  <main class="max-w-7xl mx-auto w-full px-4 lg:px-8 mt-4 md:mt-6 flex-1">
+
+    <section id="view-lab" class="tab-content block space-y-6">
+      <!-- Top Helper banner -->
+      <div class="bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            Bancada de Combinação Atômica
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-400 mt-0.5">
+            Clique nos elementos químicos abaixo para adicioná-los à bancada. Quando prontos, acione 
+            <strong class="text-indigo-300 font-semibold">"Formar Ligação"</strong> para ver a mágica do octeto acontecer!
+          </p>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap shrink-0">
+          <button onclick="triggerAutoCombination('H', 'Cl')" class="text-xs bg-slate-800 hover:bg-slate-700 text-indigo-300 px-3 py-1.5 rounded-xl border border-indigo-500/30 transition">
+            💡 Dica: H + Cl (Ácido)
+          </button>
+          <button onclick="triggerAutoCombination('Na', 'Cl')" class="text-xs bg-slate-800 hover:bg-slate-700 text-amber-300 px-3 py-1.5 rounded-xl border border-amber-500/30 transition">
+            💡 Dica: Na + Cl (Sal)
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Lab Interactive Area (2 Columns) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Column 1: Elemental Palette -->
+        <div class="lg:col-span-4 bg-slate-900/70 border border-slate-800 rounded-2xl p-4 flex flex-col">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+              <i class="fa-solid fa-cubes text-indigo-400"></i> Elementos Disponíveis
+            </h3>
+            <span class="text-[11px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded-md">Toque p/ adicionar</span>
+          </div>
+
+          <!-- Filter tags -->
+          <div class="flex gap-1.5 mb-3 text-[11px] overflow-x-auto pb-1">
+            <button onclick="filterElementPalette('all', this)" class="palette-filter bg-indigo-600/30 border border-indigo-500/50 text-indigo-300 px-2.5 py-1 rounded-lg">Todos</button>
+            <button onclick="filterElementPalette('ametal', this)" class="palette-filter bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-lg">Ametais</button>
+            <button onclick="filterElementPalette('metal', this)" class="palette-filter bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-lg">Metais</button>
+            <button onclick="filterElementPalette('excecao', this)" class="palette-filter bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-lg">Exceções</button>
+          </div>
+
+          <!-- Atom Grid -->
+          <div id="atom-palette-grid" class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-3 gap-2.5 overflow-y-auto max-h-[420px] pr-1">
+            <!-- Dynamic atom cards will be rendered here by JS -->
+          </div>
+        </div>
+
+        <!-- Column 2: Reaction Bench & Result Viewer -->
+        <div class="lg:col-span-8 space-y-6">
+          
+          <!-- Bench Area -->
+          <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 relative overflow-hidden">
+            <div class="flex items-center justify-between mb-4 border-b border-slate-800/80 pb-3">
+              <div>
+                <span class="text-xs uppercase font-bold tracking-wider text-indigo-400">Bancada de Síntese</span>
+                <p class="text-xs text-slate-400">Átomos selecionados aguardando estabilidade</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <button onclick="clearSelectedAtoms()" class="text-xs text-rose-400 hover:bg-rose-500/10 px-2.5 py-1 rounded-lg transition border border-rose-500/20">
+                  <i class="fa-solid fa-trash-can mr-1"></i> Limpar
+                </button>
+                <button onclick="synthesizeBond()" id="btn-synthesize" class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs sm:text-sm px-4 py-2 rounded-xl shadow-lg shadow-indigo-600/30 transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                  <i class="fa-solid fa-bolt"></i> Formar Ligação!
+                </button>
+              </div>
+            </div>
+
+            <!-- Staging Slots -->
+            <div id="reaction-staging" class="min-h-[140px] bg-slate-950/60 rounded-xl border-2 border-dashed border-slate-800 flex flex-wrap items-center justify-center p-4 gap-3">
+              <div class="text-center text-slate-500 text-xs py-6">
+                <i class="fa-solid fa-hand-pointer text-2xl mb-2 block opacity-40"></i>
+                Nenhum átomo na bancada. Clique nos elementos à esquerda para começar!
+              </div>
+            </div>
+          </div>
+
+          <!-- Dynamic Result Display -->
+          <div id="reaction-result-card" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-6 transition-all duration-500">
+            <!-- Populated dynamically upon reaction -->
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <section id="view-pauling" class="tab-content hidden space-y-6">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div>
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-diagram-project text-purple-400"></i> Diagrama de Linus Pauling Interativo
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-400 mt-1">
+            Selecione qualquer elemento para ver a ordem de preenchimento dos subníveis de energia de acordo com as diagonais!
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <label for="pauling-element-select" class="text-xs text-slate-400 whitespace-nowrap">Elemento:</label>
+          <select id="pauling-element-select" onchange="loadPaulingForElement(this.value)" class="bg-slate-800 text-slate-200 border border-slate-700 rounded-xl px-3 py-1.5 text-sm outline-none focus:border-indigo-500">
+            <!-- Populated via JS -->
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Visual Pauling Diagram with Diagonals -->
+        <div class="lg:col-span-7 bg-slate-900/90 border border-slate-800 rounded-2xl p-5 relative overflow-hidden">
+          <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-2">
+            <span class="text-xs uppercase font-bold tracking-wider text-purple-300">Ordem Crescente de Energia (Diagonais)</span>
+            <span class="text-[11px] text-slate-400">Capacidade: s=2, p=6, d=10, f=14</span>
+          </div>
+
+          <div class="relative overflow-x-auto py-2">
+            <div id="pauling-levels-grid" class="flex flex-col gap-2 min-w-[320px]">
+              <!-- Generated subshell rows -->
+            </div>
+          </div>
+
+          <div class="mt-4 p-3 bg-slate-950/80 rounded-xl border border-slate-800 text-xs text-slate-400 flex items-center gap-3">
+            <i class="fa-solid fa-circle-info text-indigo-400 text-base"></i>
+            <span>Os elétrons preenchem primeiro os orbitais de menor energia na direção indicada pelas setas diagonais (da direita superior para a esquerda inferior).</span>
+          </div>
+        </div>
+
+        <!-- Electronic Distribution Details Card -->
+        <div class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+              <div class="flex items-center gap-3">
+                <div id="pauling-elem-symbol" class="w-12 h-12 rounded-xl bg-purple-600/30 text-purple-300 border border-purple-500/40 flex items-center justify-center font-extrabold text-2xl">
+                  H
+                </div>
+                <div>
+                  <h3 id="pauling-elem-name" class="font-bold text-base text-white">Hidrogênio</h3>
+                  <div class="text-xs text-slate-400 flex gap-2">
+                    <span>Número Atômico (Z): <strong id="pauling-elem-z" class="text-purple-300 font-mono">1</strong></span>
+                  </div>
+                </div>
+              </div>
+              <div class="text-right">
+                <span class="text-[10px] text-slate-400 uppercase">Valência</span>
+                <div id="pauling-elem-valencia" class="text-sm font-mono font-bold text-emerald-400">1 e⁻</div>
+              </div>
+            </div>
+
+            <!-- Complete Subshell Notation -->
+            <div class="space-y-3">
+              <div>
+                <label class="text-xs uppercase tracking-wider text-slate-400 font-medium block mb-1">Distribuição em Subníveis:</label>
+                <div id="pauling-sublevels-display" class="p-3 bg-slate-950 rounded-xl border border-slate-800 font-mono text-sm text-indigo-300 leading-relaxed break-words">
+                  1s¹
+                </div>
+              </div>
+
+              <!-- Distribution per Shell (K, L, M, N...) -->
+              <div>
+                <label class="text-xs uppercase tracking-wider text-slate-400 font-medium block mb-1">Distribuição por Camadas Eletrônicas:</label>
+                <div id="pauling-shells-grid" class="grid grid-cols-4 sm:grid-cols-7 gap-1.5 text-center">
+                  <!-- K, L, M, N, O, P, Q cards -->
+                </div>
+              </div>
+
+              <!-- Valence Shell Explanation -->
+              <div class="p-3 bg-indigo-950/20 border border-indigo-500/30 rounded-xl">
+                <div class="text-xs font-semibold text-indigo-300 mb-1 flex items-center gap-1.5">
+                  <i class="fa-solid fa-shield-halved"></i> Análise da Regra do Octeto:
+                </div>
+                <p id="pauling-octet-explanation" class="text-xs text-slate-300 leading-relaxed">
+                  Possui 1 elétron na camada K. Precisa de mais 1 elétron para atingir a estabilidade do Hélio (dueto).
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-slate-800 flex justify-between items-center text-xs text-slate-500">
+            <span>Classificação: <strong id="pauling-elem-type" class="text-slate-300">Ametal</strong></span>
+            <button onclick="sendPaulingElementToLab()" class="text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1">
+              Adicionar ao Lab <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-missions" class="tab-content hidden space-y-6">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-bullseye text-amber-400"></i> Desafios de Síntese & Conquistas
+            </h2>
+            <p class="text-xs sm:text-sm text-slate-400 mt-0.5">
+              Cumpra as missões formando as substâncias exigidas para ganhar XP e subir de patente na química!
+            </p>
+          </div>
+          <div class="bg-slate-800 px-4 py-2 rounded-xl text-right shrink-0">
+            <span class="text-xs text-slate-400">Progresso Geral</span>
+            <div id="missions-progress-text" class="text-sm font-bold text-amber-400">0% Concluído</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Missions Grid -->
+      <div id="missions-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Loaded via JS -->
+      </div>
+    </section>
+
+    <section id="view-theory" class="tab-content hidden space-y-6">
+      <!-- Octet rule and exceptions -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 lg:col-span-2 space-y-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-lg font-bold border border-indigo-500/30">
+              8
+            </div>
+            <div>
+              <h3 class="font-bold text-white text-base">A Regra do Octeto (Gilbert N. Lewis)</h3>
+              <p class="text-xs text-slate-400">A busca pela estabilidade dos Gases Nobres</p>
+            </div>
+          </div>
+          <p class="text-sm text-slate-300 leading-relaxed">
+            Átomos tendem a ganhar, perder ou compartilhar elétrons para adquirir uma configuração eletrônica com 
+            <strong class="text-indigo-300">8 elétrons na sua camada de valência</strong> (ou 2 elétrons no caso da primeira camada K, assemelhando-se ao gás nobre Hélio).
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+              <div class="text-amber-400 font-bold text-xs mb-1"><i class="fa-solid fa-arrows-left-right mr-1"></i> Iônica</div>
+              <p class="text-[12px] text-slate-400">Transferência definitiva de elétrons de um metal (doa) para um ametal (recebe).</p>
+            </div>
+            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+              <div class="text-blue-400 font-bold text-xs mb-1"><i class="fa-solid fa-handshake mr-1"></i> Covalente</div>
+              <p class="text-[12px] text-slate-400">Compartilhamento mútuo de pares de elétrons entre ametais ou com hidrogênio.</p>
+            </div>
+            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+              <div class="text-purple-400 font-bold text-xs mb-1"><i class="fa-solid fa-water mr-1"></i> Metálica</div>
+              <p class="text-[12px] text-slate-400">Cátions metálicos imersos em um "mar de elétrons" livres e deslocalizados.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-slate-900 to-indigo-950/40 border border-indigo-500/30 rounded-2xl p-5 space-y-3">
+          <div class="flex items-center gap-2 text-rose-400 font-bold text-sm">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>Exceções Notáveis ao Octeto</span>
+          </div>
+          <ul class="text-xs text-slate-300 space-y-2.5">
+            <li class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
+              <strong class="text-indigo-300 font-bold">Hidrogênio (H):</strong> Estabiliza-se com apenas <strong class="text-white">2 elétrons</strong> (regra do dueto, cópia do He).
+            </li>
+            <li class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
+              <strong class="text-amber-300 font-bold">Berílio (Be):</strong> No BeCl₂, estabiliza-se com apenas <strong class="text-white">4 elétrons</strong> de valência (contração do octeto).
+            </li>
+            <li class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
+              <strong class="text-emerald-300 font-bold">Boro (B):</strong> No BF₃, fica estável com apenas <strong class="text-white">6 elétrons</strong> de valência (octeto incompleto).
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Properties Comparative Matrix -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 overflow-hidden">
+        <h3 class="text-base font-bold text-white mb-1 flex items-center gap-2">
+          <i class="fa-solid fa-table-cells text-indigo-400"></i> Matriz de Propriedades das Substâncias
+        </h3>
+        <p class="text-xs text-slate-400 mb-4">Compare o comportamento físico e elétrico de cada tipo de ligação</p>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="border-b border-slate-800 text-slate-400 uppercase text-[11px] bg-slate-950/50">
+                <th class="py-3 px-4 font-semibold">Propriedade</th>
+                <th class="py-3 px-4 font-semibold text-amber-400">Substâncias Iônicas (ex: NaCl)</th>
+                <th class="py-3 px-4 font-semibold text-blue-400">Substâncias Moleculares (ex: H₂O, HCl)</th>
+                <th class="py-3 px-4 font-semibold text-purple-400">Substâncias Metálicas (ex: Fe, Cu)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/60 text-slate-300">
+              <tr class="hover:bg-slate-800/30">
+                <td class="py-3 px-4 font-medium text-white">Estado Físico Padrão (25°C)</td>
+                <td class="py-3 px-4">Sólidos cristalinos duros e quebradiços</td>
+                <td class="py-3 px-4">Gases, líquidos ou sólidos de baixo PF</td>
+                <td class="py-3 px-4">Sólidos (exceto Mercúrio que é líquido)</td>
+              </tr>
+              <tr class="hover:bg-slate-800/30">
+                <td class="py-3 px-4 font-medium text-white">Pontos de Fusão e Ebulição</td>
+                <td class="py-3 px-4"><span class="text-emerald-400 font-semibold">Muito Altos</span> (fortes atrações eletrostáticas)</td>
+                <td class="py-3 px-4"><span class="text-rose-400 font-semibold">Baixos a Moderados</span> (forças intermoleculares fracas)</td>
+                <td class="py-3 px-4"><span class="text-emerald-400 font-semibold">Geralmente Altos</span> (ligação metálica coesa)</td>
+              </tr>
+              <tr class="hover:bg-slate-800/30">
+                <td class="py-3 px-4 font-medium text-white">Condutividade no Estado Sólido</td>
+                <td class="py-3 px-4 text-rose-400">Não conduz (íons fixos no retículo)</td>
+                <td class="py-3 px-4 text-rose-400">Não conduz (moléculas neutras)</td>
+                <td class="py-3 px-4 text-emerald-400 font-semibold">Excelente condutor (elétrons livres)</td>
+              </tr>
+              <tr class="hover:bg-slate-800/30">
+                <td class="py-3 px-4 font-medium text-white">Condutividade Líquido / Aquoso</td>
+                <td class="py-3 px-4 text-emerald-400 font-semibold">Conduz quando fundido ou dissolvido em água</td>
+                <td class="py-3 px-4">Geralmente não conduz (exceto ácidos que ionizam)</td>
+                <td class="py-3 px-4 text-emerald-400 font-semibold">Excelente condutor quando fundido</td>
+              </tr>
+              <tr class="hover:bg-slate-800/30">
+                <td class="py-3 px-4 font-medium text-white">Maleabilidade e Ductilidade</td>
+                <td class="py-3 px-4">Quebradiços (clivagem sob pressão mecânica)</td>
+                <td class="py-3 px-4">Sem ductilidade estrutural</td>
+                <td class="py-3 px-4 text-emerald-400 font-semibold">Altamente maleáveis (lâminas) e dúcteis (fios)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Mobile Bottom Floating Navigation Bar -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-lg border-t border-slate-800 px-2 py-1.5 shadow-2xl flex items-center justify-around">
+    <button onclick="switchTab('lab')" id="mobile-nav-lab" class="mobile-nav-item flex flex-col items-center justify-center p-1.5 text-indigo-400 transition">
+      <i class="fa-solid fa-flask-vial text-base"></i>
+      <span class="text-[10px] font-medium mt-0.5">Laboratório</span>
+    </button>
+    <button onclick="switchTab('pauling')" id="mobile-nav-pauling" class="mobile-nav-item flex flex-col items-center justify-center p-1.5 text-slate-400 transition">
+      <i class="fa-solid fa-diagram-project text-base"></i>
+      <span class="text-[10px] font-medium mt-0.5">L. Pauling</span>
+    </button>
+    <button onclick="switchTab('missions')" id="mobile-nav-missions" class="mobile-nav-item flex flex-col items-center justify-center p-1.5 text-slate-400 relative transition">
+      <i class="fa-solid fa-bullseye text-base"></i>
+      <span class="text-[10px] font-medium mt-0.5">Missões</span>
+      <span id="mobile-badge-missions" class="absolute -top-0.5 right-1 w-2 h-2 rounded-full bg-indigo-500"></span>
+    </button>
+    <button onclick="switchTab('theory')" id="mobile-nav-theory" class="mobile-nav-item flex flex-col items-center justify-center p-1.5 text-slate-400 transition">
+      <i class="fa-solid fa-book-bookmark text-base"></i>
+      <span class="text-[10px] font-medium mt-0.5">Teoria</span>
+    </button>
+  </nav>
+
+  <div id="lewis-modal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-slate-900 border border-slate-700/80 rounded-3xl max-w-2xl w-full p-4 sm:p-6 shadow-2xl space-y-4 my-auto">
+      <div class="flex items-start justify-between border-b border-slate-800 pb-3">
+        <div>
+          <h3 id="modal-compound-title" class="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+            Estrutura Molecular 3D
+          </h3>
+          <p id="modal-compound-subtitle" class="text-xs text-indigo-300 font-medium mt-0.5">
+            Geometria Espacial e Mecanismo de Ligação
+          </p>
+        </div>
+        <button onclick="closeLewisModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Tab Switcher between 3D and 2D Lewis -->
+      <div class="flex border-b border-slate-800 gap-2">
+        <button id="btn-tab-3d" onclick="switchModalTab('3d')" class="px-3.5 py-1.5 text-xs font-bold border-b-2 border-indigo-500 text-indigo-400 flex items-center gap-1.5 transition">
+          <i class="fa-solid fa-cube"></i> Visualização 3D Espacial
+        </button>
+        <button id="btn-tab-2d" onclick="switchModalTab('2d')" class="px-3.5 py-1.5 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-1.5 transition">
+          <i class="fa-solid fa-atom"></i> Fórmula de Lewis (2D)
+        </button>
+      </div>
+
+      <!-- 3D Interactive Canvas Tab -->
+      <div id="modal-tab-3d-view" class="space-y-3">
+        <div class="relative bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden flex items-center justify-center h-[260px] sm:h-[300px]">
+          <canvas id="molecule-3d-canvas" class="w-full h-full cursor-grab active:cursor-grabbing"></canvas>
+
+          <!-- 3D Floating Control overlay -->
+          <div class="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between pointer-events-none">
+            <div class="flex items-center gap-1.5 pointer-events-auto bg-slate-900/80 backdrop-blur-md px-2.5 py-1 rounded-xl border border-slate-700/60 text-[11px] text-slate-300">
+              <button onclick="toggle3DRotation()" title="Pausar / Retomar Rotação" class="p-1 hover:text-indigo-400 transition">
+                <i id="rotate-icon" class="fa-solid fa-pause text-[10px]"></i>
+              </button>
+              <button onclick="reset3DCamera()" title="Redefinir Câmera" class="p-1 hover:text-indigo-400 transition">
+                <i class="fa-solid fa-arrows-rotate text-[10px]"></i>
+              </button>
+              <span class="text-slate-500 text-[10px] ml-1">Arraste para girar 360°</span>
+            </div>
+            <div class="pointer-events-auto hidden sm:flex items-center gap-1 bg-slate-900/80 backdrop-blur-md px-2.5 py-1 rounded-xl border border-slate-700/60 text-[10px] text-indigo-300 font-mono">
+              <span id="label-geometry">Geometria</span> • <span id="label-angle">Ângulo</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3D Element legend -->
+        <div id="modal-3d-atoms-legend" class="flex flex-wrap items-center justify-center gap-2">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- 2D Lewis Diagram View Tab -->
+      <div id="modal-tab-2d-view" class="hidden space-y-3">
+        <div id="modal-interactive-canvas-container" class="bg-slate-950 rounded-2xl p-6 border border-slate-800 flex flex-col items-center justify-center min-h-[220px]">
+          <!-- Lewis Diagram dynamic rendering -->
+        </div>
+      </div>
+
+      <div id="modal-compound-details" class="text-xs text-slate-300 space-y-2">
+        <!-- Details loaded via JS -->
+      </div>
+
+      <div class="text-right pt-2 border-t border-slate-800/80 flex items-center justify-between">
+        <span class="text-[11px] text-slate-500">Escola Agenor Guerra • Prof. Júlio</span>
+        <button onclick="closeLewisModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs px-5 py-2 rounded-xl transition">
+          Fechar Visualizador
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* Safe Lazy Audio Synthesizer */
+    let audioCtx = null;
+    let soundEnabled = true;
+
+    function getAudioContext() {
+      if (!audioCtx && typeof window !== 'undefined') {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+          try {
+            audioCtx = new AudioContextClass();
+          } catch (e) {
+            console.warn('AudioContext not allowed or not supported yet:', e);
+          }
+        }
+      }
+      return audioCtx;
+    }
+
+    function playTone(frequency, type = 'sine', duration = 0.15, gainVal = 0.1) {
+      if (!soundEnabled) return;
+      try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        if (ctx.state === 'suspended') {
+          ctx.resume().catch(() => {});
+        }
+        const osc = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(frequency, ctx.currentTime);
+        gainNode.gain.setValueAtTime(gainVal, ctx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+        osc.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + duration);
+      } catch (e) {
+        // Fallback gracefully without breaking execution
+      }
+    }
+
+    function playSuccessSound() {
+      playTone(523.25, 'triangle', 0.1, 0.15); // C5
+      setTimeout(() => playTone(659.25, 'triangle', 0.12, 0.15), 100); // E5
+      setTimeout(() => playTone(783.99, 'triangle', 0.25, 0.18), 200); // G5
+    }
+
+    function playAddAtomSound() {
+      playTone(440, 'sine', 0.08, 0.08);
+    }
+
+    function playErrorSound() {
+      playTone(220, 'sawtooth', 0.2, 0.12);
+    }
+
+    function toggleAudio() {
+      soundEnabled = !soundEnabled;
+      const icon = document.getElementById('sound-icon');
+      if (icon) {
+        if (soundEnabled) {
+          icon.className = 'fa-solid fa-volume-high text-xs';
+          showToast('Efeitos sonoros ativados', 'info');
+        } else {
+          icon.className = 'fa-solid fa-volume-xmark text-xs';
+          showToast('Efeitos sonoros desativados', 'info');
+        }
+      }
+    }
+
+    /* Complete Elements Database */
+    const ELEMENTS = {
+      H: {
+        symbol: 'H',
+        name: 'Hidrogênio',
+        z: 1,
+        family: 'ametal',
+        valence: 1,
+        shells: { K: 1 },
+        subshells: '1s¹',
+        color: '#60a5fa',
+        electronegativity: 2.20,
+        octetoRule: 'Regra do Dueto: estabiliza-se com 2 elétrons de valência.'
+      },
+      He: {
+        symbol: 'He',
+        name: 'Hélio',
+        z: 2,
+        family: 'gas_nobre',
+        valence: 2,
+        shells: { K: 2 },
+        subshells: '1s²',
+        color: '#a78bfa',
+        electronegativity: 0,
+        octetoRule: 'Gás nobre estável por ter a camada K completa com 2 elétrons.'
+      },
+      Li: {
+        symbol: 'Li',
+        name: 'Lítio',
+        z: 3,
+        family: 'metal',
+        valence: 1,
+        shells: { K: 2, L: 1 },
+        subshells: '1s² 2s¹',
+        color: '#fbbf24',
+        electronegativity: 0.98,
+        octetoRule: 'Tende a perder 1 elétron tornando-se Li⁺.'
+      },
+      Be: {
+        symbol: 'Be',
+        name: 'Berílio',
+        z: 4,
+        family: 'excecao',
+        valence: 2,
+        shells: { K: 2, L: 2 },
+        subshells: '1s² 2s²',
+        color: '#f59e0b',
+        electronegativity: 1.57,
+        octetoRule: 'Exceção: forma compostos estáveis compartilhando 2 pares (4 elétrons totais).'
+      },
+      B: {
+        symbol: 'B',
+        name: 'Boro',
+        z: 5,
+        family: 'excecao',
+        valence: 3,
+        shells: { K: 2, L: 3 },
+        subshells: '1s² 2s² 2p¹',
+        color: '#34d399',
+        electronegativity: 2.04,
+        octetoRule: 'Exceção: estabiliza-se com 6 elétrons de valência (ex: BF₃).'
+      },
+      C: {
+        symbol: 'C',
+        name: 'Carbono',
+        z: 6,
+        family: 'ametal',
+        valence: 4,
+        shells: { K: 2, L: 4 },
+        subshells: '1s² 2s² 2p²',
+        color: '#94a3b8',
+        electronegativity: 2.55,
+        octetoRule: 'Tetravalente: compartilha 4 elétrons para completar 8.'
+      },
+      N: {
+        symbol: 'N',
+        name: 'Nitrogênio',
+        z: 7,
+        family: 'ametal',
+        valence: 5,
+        shells: { K: 2, L: 5 },
+        subshells: '1s² 2s² 2p³',
+        color: '#38bdf8',
+        electronegativity: 3.04,
+        octetoRule: 'Compartilha 3 elétrons para atingir 8 elétrons na camada L.'
+      },
+      O: {
+        symbol: 'O',
+        name: 'Oxigênio',
+        z: 8,
+        family: 'ametal',
+        valence: 6,
+        shells: { K: 2, L: 6 },
+        subshells: '1s² 2s² 2p⁴',
+        color: '#f87171',
+        electronegativity: 3.44,
+        octetoRule: 'Muito eletronegativo: precisa de 2 elétrons para completar o octeto.'
+      },
+      F: {
+        symbol: 'F',
+        name: 'Flúor',
+        z: 9,
+        family: 'ametal',
+        valence: 7,
+        shells: { K: 2, L: 7 },
+        subshells: '1s² 2s² 2p⁵',
+        color: '#2dd4bf',
+        electronegativity: 3.98,
+        octetoRule: 'O mais eletronegativo da tabela periódica: ganha/compartilha 1 elétron.'
+      },
+      Na: {
+        symbol: 'Na',
+        name: 'Sódio',
+        z: 11,
+        family: 'metal',
+        valence: 1,
+        shells: { K: 2, L: 8, M: 1 },
+        subshells: '1s² 2s² 2p⁶ 3s¹',
+        color: '#fbbf24',
+        electronegativity: 0.93,
+        octetoRule: 'Metal alcalino: perde 1 elétron facilmente formando o cátion Na⁺ com camada L completa.'
+      },
+      Mg: {
+        symbol: 'Mg',
+        name: 'Magnésio',
+        z: 12,
+        family: 'metal',
+        valence: 2,
+        shells: { K: 2, L: 8, M: 2 },
+        subshells: '1s² 2s² 2p⁶ 3s²',
+        color: '#facc15',
+        electronegativity: 1.31,
+        octetoRule: 'Alcalinoterroso: perde 2 elétrons gerando Mg²⁺.'
+      },
+      Al: {
+        symbol: 'Al',
+        name: 'Alumínio',
+        z: 13,
+        family: 'metal',
+        valence: 3,
+        shells: { K: 2, L: 8, M: 3 },
+        subshells: '1s² 2s² 2p⁶ 3s² 3p¹',
+        color: '#cbd5e1',
+        electronegativity: 1.61,
+        octetoRule: 'Perde 3 elétrons formando Al³⁺ ou participa de ligações metálicas.'
+      },
+      Cl: {
+        symbol: 'Cl',
+        name: 'Cloro',
+        z: 17,
+        family: 'ametal',
+        valence: 7,
+        shells: { K: 2, L: 8, M: 7 },
+        subshells: '1s² 2s² 2p⁶ 3s² 3p⁵',
+        color: '#4ade80',
+        electronegativity: 3.16,
+        octetoRule: 'Halogênio: necessita de 1 elétron para obter 8 na camada M (Cl⁻).'
+      },
+      Ca: {
+        symbol: 'Ca',
+        name: 'Cálcio',
+        z: 20,
+        family: 'metal',
+        valence: 2,
+        shells: { K: 2, L: 8, M: 8, N: 2 },
+        subshells: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s²',
+        color: '#fb923c',
+        electronegativity: 1.00,
+        octetoRule: 'Perde 2 elétrons da camada 4s tornando-se Ca²⁺.'
+      },
+      Fe: {
+        symbol: 'Fe',
+        name: 'Ferro',
+        z: 26,
+        family: 'metal',
+        valence: 2,
+        shells: { K: 2, L: 8, M: 14, N: 2 },
+        subshells: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d⁶',
+        color: '#94a3b8',
+        electronegativity: 1.83,
+        octetoRule: 'Metal de transição: estabelece ligação metálica através do mar de elétrons.'
+      },
+      Cu: {
+        symbol: 'Cu',
+        name: 'Cobre',
+        z: 29,
+        family: 'metal',
+        valence: 1,
+        shells: { K: 2, L: 8, M: 18, N: 1 },
+        subshells: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s¹ 3d¹⁰',
+        color: '#f97316',
+        electronegativity: 1.90,
+        octetoRule: 'Excelente condutor: ligação metálica com elétrons 4s deslocalizados.'
+      }
+    };
+
+    const RECIPES = [
+      {
+        id: 'HCl',
+        atoms: { H: 1, Cl: 1 },
+        name: 'Ácido Clorídrico',
+        formula: 'HCl',
+        type: 'Covalente Simples',
+        category: 'covalent',
+        geometry: 'Linear',
+        bondAngle: '180°',
+        xp: 40,
+        desc: 'O Hidrogênio compartilha 1 par de elétrons com o Cloro. O Hidrogênio adquire dueto e o Cloro completa o octeto.',
+        lewisText: 'H : Cl (com 3 pares isolados no Cl)',
+        properties: {
+          pf: '-114 °C (Baixo)',
+          conduct: 'Conduz eletricidade em solução aquosa por ionização (H⁺ + Cl⁻)',
+          solubility: 'Muito solúvel em água',
+          state: 'Gás em condições ambientes'
+        }
+      },
+      {
+        id: 'NaCl',
+        atoms: { Na: 1, Cl: 1 },
+        name: 'Cloreto de Sódio (Sal de Cozinha)',
+        formula: 'NaCl',
+        type: 'Iônica',
+        category: 'ionic',
+        geometry: 'Reticulado Cúbico de Face Centrada',
+        bondAngle: '90° (Arranjo Cristalino)',
+        xp: 50,
+        desc: 'O Sódio (metal) doa 1 elétron para o Cloro (ametal). Formam-se os íons Na⁺ e Cl⁻ unidos por forte atração eletrostática.',
+        lewisText: '[Na]⁺ [ :Cl: ]⁻',
+        properties: {
+          pf: '801 °C (Muito Alto)',
+          conduct: 'Conduz eletricidade fundido ou em solução aquosa; isolante no estado sólido',
+          solubility: 'Alta solubilidade em solventes polares (água)',
+          state: 'Sólido cristalino cúbico'
+        }
+      },
+      {
+        id: 'H2O',
+        atoms: { H: 2, O: 1 },
+        name: 'Água',
+        formula: 'H₂O',
+        type: 'Covalente Simples',
+        category: 'covalent',
+        geometry: 'Angular',
+        bondAngle: '104.5°',
+        xp: 50,
+        desc: 'O Oxigênio compartilha 2 pares de elétrons simples com 2 átomos de Hidrogênio. O Oxigênio atinge o octeto (8 e⁻) e os Hidrogênios completam o dueto.',
+        lewisText: 'H - Ö - H (com 2 pares não ligantes no O)',
+        properties: {
+          pf: '0 °C / PE: 100 °C',
+          conduct: 'Água pura é isolante; conduz com eletrólitos dissolvidos',
+          solubility: 'Solvente universal polar',
+          state: 'Líquido à temperatura ambiente'
+        }
+      },
+      {
+        id: 'CO2',
+        atoms: { C: 1, O: 2 },
+        name: 'Dióxido de Carbono',
+        formula: 'CO₂',
+        type: 'Covalente Dupla (Duas duplas)',
+        category: 'covalent',
+        geometry: 'Linear',
+        bondAngle: '180°',
+        xp: 60,
+        desc: 'O Carbono central estabelece duas ligações duplas com cada Oxigênio (O=C=O). Todos completam 8 elétrons na camada de valência.',
+        lewisText: 'O = C = O',
+        properties: {
+          pf: '-78.5 °C (Sublimação)',
+          conduct: 'Não condutor elétrico',
+          solubility: 'Moderadamente solúvel',
+          state: 'Gás incolor'
+        }
+      },
+      {
+        id: 'CH4',
+        atoms: { C: 1, H: 4 },
+        name: 'Metano (Gás Natural)',
+        formula: 'CH₄',
+        type: 'Covalente Simples (4 ligações)',
+        category: 'covalent',
+        geometry: 'Tetraédrica',
+        bondAngle: '109.5°',
+        xp: 65,
+        desc: 'O Carbono compartilha 4 elétrons com 4 átomos de Hidrogênio. Geometria tetraédrica espacial perfeitamente estável.',
+        lewisText: 'H₄C (4 ligações C-H simples)',
+        properties: {
+          pf: '-182 °C',
+          conduct: 'Isolante elétrico',
+          solubility: 'Insolúvel em água (apolar)',
+          state: 'Gás inflamável'
+        }
+      },
+      {
+        id: 'NH3',
+        atoms: { N: 1, H: 3 },
+        name: 'Amônia',
+        formula: 'NH₃',
+        type: 'Covalente Simples',
+        category: 'covalent',
+        geometry: 'Piramidal Trigonal',
+        bondAngle: '107°',
+        xp: 55,
+        desc: 'O Nitrogênio compartilha 3 elétrons com 3 átomos de H e mantém 1 par de elétrons isolado no topo.',
+        lewisText: 'H₃N: (1 par isolado)',
+        properties: {
+          pf: '-77.7 °C',
+          conduct: 'Fraca condutora em meio aquoso (NH₄⁺ + OH⁻)',
+          solubility: 'Altamente solúvel em água',
+          state: 'Gás com odor penetrante'
+        }
+      },
+      {
+        id: 'BF3',
+        atoms: { B: 1, F: 3 },
+        name: 'Trifluoreto de Boro',
+        formula: 'BF₃',
+        type: 'Covalente (Exceção do Octeto)',
+        category: 'covalent',
+        geometry: 'Trigonal Plana',
+        bondAngle: '120°',
+        xp: 80,
+        desc: 'EXCEÇÃO DO OCTETO! O Boro estabiliza-se com apenas 6 elétrons na camada de valência compartilhando 3 pares com os átomos de Flúor.',
+        lewisText: 'F - B - F (apenas 6 elétrons no B central)',
+        properties: {
+          pf: '-126.8 °C',
+          conduct: 'Não condutor elétrico',
+          solubility: 'Reage com água',
+          state: 'Gás tóxico'
+        }
+      },
+      {
+        id: 'BeCl2',
+        atoms: { Be: 1, Cl: 2 },
+        name: 'Cloreto de Berílio',
+        formula: 'BeCl₂',
+        type: 'Covalente / Polar (Exceção do Octeto)',
+        category: 'covalent',
+        geometry: 'Linear',
+        bondAngle: '180°',
+        xp: 85,
+        desc: 'EXCEÇÃO DO OCTETO! O Berílio estabiliza-se com apenas 4 elétrons de valência através de 2 pares compartilhados lineares.',
+        lewisText: 'Cl - Be - Cl (Be com 4 elétrons)',
+        properties: {
+          pf: '405 °C',
+          conduct: 'Conduz quando fundido',
+          solubility: 'Solúvel com hidrólise',
+          state: 'Sólido linear'
+        }
+      },
+      {
+        id: 'Fe2',
+        atoms: { Fe: 2 },
+        name: 'Ferro Metálico (Reticulado)',
+        formula: 'Fe (Metálico)',
+        type: 'Ligação Metálica',
+        category: 'metallic',
+        geometry: 'Reticulado Metálico CCC',
+        bondAngle: 'Nuvem Deslocalizada',
+        xp: 50,
+        desc: 'Átomos de Ferro organizam-se em uma rede cristalina. Os elétrons de valência desprendem-se formando um "mar de elétrons" deslocalizados.',
+        lewisText: 'Fe²⁺ imersos em nuvem de e⁻ livres',
+        properties: {
+          pf: '1538 °C (Altíssimo)',
+          conduct: 'Excepcional condutor térmico e elétrico sólido ou fundido',
+          solubility: 'Insolúvel em água',
+          state: 'Sólido maleável, tenaz e magnético'
+        }
+      },
+      {
+        id: 'Cu2',
+        atoms: { Cu: 2 },
+        name: 'Cobre Metálico (Reticulado)',
+        formula: 'Cu (Metálico)',
+        type: 'Ligação Metálica',
+        category: 'metallic',
+        geometry: 'Reticulado Metálico CFC',
+        bondAngle: 'Nuvem Deslocalizada',
+        xp: 50,
+        desc: 'Os cátions de Cobre permanecem coesos pela atração do mar de elétrons livres, permitindo elevada ductilidade e condutividade.',
+        lewisText: 'Cu⁺ / Cu²⁺ em mar de elétrons',
+        properties: {
+          pf: '1085 °C',
+          conduct: 'Segundo melhor condutor elétrico comercial',
+          solubility: 'Insolúvel em água',
+          state: 'Metal dúctil avermelhado'
+        }
+      },
+      {
+        id: 'O2',
+        atoms: { O: 2 },
+        name: 'Gás Oxigênio',
+        formula: 'O₂',
+        type: 'Covalente Dupla',
+        category: 'covalent',
+        geometry: 'Linear',
+        bondAngle: '180°',
+        xp: 45,
+        desc: 'Dois átomos de Oxigênio compartilham 2 pares de elétrons (ligação dupla O=O). Ambos satisfazem a regra dos 8 elétrons.',
+        lewisText: ':Ö = Ö:',
+        properties: {
+          pf: '-218.8 °C',
+          conduct: 'Isolante elétrico',
+          solubility: 'Pouco solúvel em água',
+          state: 'Gás essencial para a respiração'
+        }
+      },
+      {
+        id: 'N2',
+        atoms: { N: 2 },
+        name: 'Gás Nitrogênio',
+        formula: 'N₂',
+        type: 'Covalente Tripla',
+        category: 'covalent',
+        geometry: 'Linear',
+        bondAngle: '180°',
+        xp: 60,
+        desc: 'Ligação tripla forte (N≡N). Compartilhamento de 3 pares de elétrons, conferindo altíssima inércia química.',
+        lewisText: ':N ≡ N:',
+        properties: {
+          pf: '-210 °C',
+          conduct: 'Isolante elétrico',
+          solubility: 'Muito baixa em água',
+          state: '78% da atmosfera terrestre'
+        }
+      },
+      {
+        id: 'MgCl2',
+        atoms: { Mg: 1, Cl: 2 },
+        name: 'Cloreto de Magnésio',
+        formula: 'MgCl₂',
+        type: 'Iônica',
+        category: 'ionic',
+        geometry: 'Reticulado Cristalino Iônico',
+        bondAngle: 'Coordenação Iônica',
+        xp: 60,
+        desc: 'O Magnésio cede 2 elétrons (1 para cada Cloro). Forma-se Mg²⁺ e 2 Cl⁻.',
+        lewisText: '[Mg]²⁺ 2[ :Cl: ]⁻',
+        properties: {
+          pf: '714 °C',
+          conduct: 'Conduz em solução e fundido',
+          solubility: 'Muito solúvel',
+          state: 'Sólido cristalino deliquescente'
+        }
+      },
+      {
+        id: 'CaO',
+        atoms: { Ca: 1, O: 1 },
+        name: 'Óxido de Cálcio (Cal Viva)',
+        formula: 'CaO',
+        type: 'Iônica',
+        category: 'ionic',
+        geometry: 'Reticulado Tipo Halita',
+        bondAngle: 'Coordenação 6:6',
+        xp: 55,
+        desc: 'O Cálcio doa 2 elétrons para o Oxigênio gerando Ca²⁺ e O²⁻.',
+        lewisText: '[Ca]²⁺ [ :Ö: ]²⁻',
+        properties: {
+          pf: '2613 °C (Extremamente Alto)',
+          conduct: 'Conduz quando fundido',
+          solubility: 'Reage exotermicamente com água',
+          state: 'Pó branco refratário'
+        }
+      }
+    ];
+
+    const SHELL_NAMES = ['K', 'L', 'M', 'N', 'O', 'P', 'Q'];
+
+    const PAULING_SUBSHELLS = [
+      { id: '1s', shell: 'K', max: 2, level: 1 },
+      { id: '2s', shell: 'L', max: 2, level: 2 },
+      { id: '2p', shell: 'L', max: 6, level: 2 },
+      { id: '3s', shell: 'M', max: 2, level: 3 },
+      { id: '3p', shell: 'M', max: 6, level: 3 },
+      { id: '4s', shell: 'N', max: 2, level: 4 },
+      { id: '3d', shell: 'M', max: 10, level: 3 },
+      { id: '4p', shell: 'N', max: 6, level: 4 },
+      { id: '5s', shell: 'O', max: 2, level: 5 },
+      { id: '4d', shell: 'N', max: 10, level: 4 },
+      { id: '5p', shell: 'O', max: 6, level: 5 },
+      { id: '6s', shell: 'P', max: 2, level: 6 },
+      { id: '4f', shell: 'N', max: 14, level: 4 },
+      { id: '5d', shell: 'O', max: 10, level: 5 },
+      { id: '6p', shell: 'P', max: 6, level: 6 },
+      { id: '7s', shell: 'Q', max: 2, level: 7 },
+      { id: '5f', shell: 'O', max: 14, level: 5 },
+      { id: '6d', shell: 'P', max: 10, level: 6 },
+      { id: '7p', shell: 'Q', max: 6, level: 7 }
+    ];
+
+    const MISSIONS = [
+      {
+        id: 'm1',
+        title: 'O Primeiro Ácido',
+        target: 'HCl',
+        reward: 50,
+        hint: 'Junte 1 Hidrogênio (H) com 1 Cloro (Cl).'
+      },
+      {
+        id: 'm2',
+        title: 'Sal da Vida',
+        target: 'NaCl',
+        reward: 60,
+        hint: 'Junte 1 metal alcalino (Na) com 1 halogênio (Cl).'
+      },
+      {
+        id: 'm3',
+        title: 'A Molécula Vital',
+        target: 'H2O',
+        reward: 60,
+        hint: 'Combine 2 átomos de Hidrogênio e 1 Oxigênio.'
+      },
+      {
+        id: 'm4',
+        title: 'O Mar Metálico',
+        target: 'Fe2',
+        reward: 70,
+        hint: 'Coloque 2 átomos de Ferro (Fe) na bancada.'
+      },
+      {
+        id: 'm5',
+        title: 'Desafiando o Octeto I',
+        target: 'BF3',
+        reward: 100,
+        hint: 'Combine 1 Boro (B) e 3 Flúor (F) para provar a contração do octeto (6 elétrons).'
+      },
+      {
+        id: 'm6',
+        title: 'Ligação Tripla Robusta',
+        target: 'N2',
+        reward: 80,
+        hint: 'Junte 2 átomos de Nitrogênio (N) para formar ligação covalente tripla.'
+      }
+    ];
+
+    const RANKS = [
+      { minXp: 0, name: 'Iniciante' },
+      { minXp: 100, name: 'Praticante' },
+      { minXp: 250, name: 'Manipulador' },
+      { minXp: 450, name: 'Mestre' },
+      { minXp: 750, name: 'Alquimista' }
+    ];
+
+    const gameState = {
+      xp: 0,
+      studentName: 'Estudante',
+      selectedAtoms: [],
+      discoveredRecipes: new Set(),
+      missionsCompleted: new Set(),
+      lastFormedRecipe: null
+    };
+
+    function renderMissionsList() {
+      const container = document.getElementById('missions-list-container');
+      if (!container) return;
+      container.innerHTML = '';
+
+      MISSIONS.forEach(m => {
+        const isDone = gameState.missionsCompleted.has(m.id);
+        const card = document.createElement('div');
+        card.className = `p-4 rounded-2xl border transition-all ${isDone ? 'bg-emerald-950/20 border-emerald-500/40 shadow-lg shadow-emerald-950/20' : 'bg-slate-900 border-slate-800'}`;
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-2 mb-2">
+            <div>
+              <span class="text-[10px] uppercase font-bold tracking-wider ${isDone ? 'text-emerald-400' : 'text-amber-400'}">
+                ${isDone ? '<i class="fa-solid fa-circle-check mr-1"></i> Missão Concluída' : '<i class="fa-solid fa-flag mr-1"></i> Desafio Ativo'}
+              </span>
+              <h4 class="text-sm font-bold text-white mt-0.5">${m.title}</h4>
+            </div>
+            <span class="px-2 py-0.5 rounded-full text-xs font-mono font-bold ${isDone ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'}">
+              +${m.reward} XP
+            </span>
+          </div>
+          <p class="text-xs text-slate-400 leading-relaxed mb-3">${m.hint}</p>
+          <div class="flex items-center justify-between pt-2 border-t border-slate-800/80">
+            <span class="text-[10px] text-slate-500 font-mono">Alvo: ${m.target}</span>
+            <button onclick="prepareMissionHint('${m.target}')" class="text-xs ${isDone ? 'text-slate-500 hover:text-slate-400' : 'text-indigo-400 hover:text-indigo-300 font-semibold'} transition flex items-center gap-1">
+              <span>${isDone ? 'Revisar' : 'Preparar no Lab'}</span>
+              <i class="fa-solid fa-arrow-right text-[10px]"></i>
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function checkMissions(recipeId) {
+      MISSIONS.forEach(m => {
+        if (m.target === recipeId && !gameState.missionsCompleted.has(m.id)) {
+          gameState.missionsCompleted.add(m.id);
+          addXp(m.reward);
+          showToast(`🏆 Missão cumprida: "${m.title}"! +${m.reward} XP`, 'success');
+        }
+      });
+      renderMissionsList();
+      updateGamificationUI();
+    }
+
+    function prepareMissionHint(targetId) {
+      const recipe = RECIPES.find(r => r.id === targetId);
+      if (!recipe) return;
+      clearSelectedAtoms();
+      Object.keys(recipe.atoms).forEach(sym => {
+        const count = recipe.atoms[sym];
+        for (let i = 0; i < count; i++) {
+          addAtomToBench(sym);
+        }
+      });
+      switchTab('lab');
+      showToast(`Átomos para "${recipe.name}" carregados na bancada!`, 'info');
+    }
+
+    function addXp(amount) {
+      gameState.xp += amount;
+      updateGamificationUI();
+    }
+
+    function updateGamificationUI() {
+      let currentRank = RANKS[0].name;
+      let nextRankXp = RANKS[1].minXp;
+      let currentRankXp = 0;
+
+      for (let i = 0; i < RANKS.length; i++) {
+        if (gameState.xp >= RANKS[i].minXp) {
+          currentRank = RANKS[i].name;
+          currentRankXp = RANKS[i].minXp;
+          nextRankXp = RANKS[i + 1] ? RANKS[i + 1].minXp : RANKS[i].minXp + 400;
+        }
+      }
+
+      const pRank = document.getElementById('player-rank');
+      if (pRank) pRank.textContent = currentRank;
+
+      const pXp = document.getElementById('player-xp');
+      if (pXp) pXp.textContent = `${gameState.xp} XP`;
+
+      const pProg = document.getElementById('player-progress');
+      if (pProg) {
+        const span = Math.max(1, nextRankXp - currentRankXp);
+        const prog = Math.min(100, Math.max(0, ((gameState.xp - currentRankXp) / span) * 100));
+        pProg.style.width = `${prog}%`;
+      }
+
+      const totalMissions = MISSIONS.length;
+      const completedCount = gameState.missionsCompleted.size;
+      const badgeM = document.getElementById('badge-missions');
+      if (badgeM) badgeM.textContent = `${completedCount}/${totalMissions}`;
+
+      const progTxt = document.getElementById('missions-progress-text');
+      if (progTxt) {
+        const percentage = Math.round((completedCount / totalMissions) * 100);
+        progTxt.textContent = `${percentage}% Concluído`;
+      }
+    }
+
+    function initPaulingView() {
+      const select = document.getElementById('pauling-element-select');
+      if (select) {
+        select.innerHTML = '';
+        Object.keys(ELEMENTS).forEach(sym => {
+          const opt = document.createElement('option');
+          opt.value = sym;
+          opt.textContent = `${ELEMENTS[sym].name} (${sym}) - Z=${ELEMENTS[sym].z}`;
+          select.appendChild(opt);
+        });
+      }
+
+      const grid = document.getElementById('pauling-levels-grid');
+      if (grid) {
+        grid.innerHTML = '';
+        const rows = [
+          { level: 'K (n=1)', items: ['1s'] },
+          { level: 'L (n=2)', items: ['2s', '2p'] },
+          { level: 'M (n=3)', items: ['3s', '3p', '3d'] },
+          { level: 'N (n=4)', items: ['4s', '4p', '4d', '4f'] },
+          { level: 'O (n=5)', items: ['5s', '5p', '5d', '5f'] },
+          { level: 'P (n=6)', items: ['6s', '6p', '6d'] },
+          { level: 'Q (n=7)', items: ['7s', '7p'] }
+        ];
+
+        rows.forEach(r => {
+          const rowDiv = document.createElement('div');
+          rowDiv.className = 'flex items-center gap-3 py-1';
+          const label = document.createElement('div');
+          label.className = 'w-16 text-[11px] font-mono font-bold text-slate-400 shrink-0';
+          label.textContent = r.level;
+          rowDiv.appendChild(label);
+
+          const itemsContainer = document.createElement('div');
+          itemsContainer.className = 'flex items-center gap-2 flex-wrap';
+
+          r.items.forEach(subId => {
+            const sub = PAULING_SUBSHELLS.find(s => s.id === subId);
+            const subDiv = document.createElement('div');
+            subDiv.id = `subshell-node-${subId}`;
+            subDiv.className = 'px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-950 font-mono text-xs text-slate-500 flex items-center justify-between gap-2 min-w-[72px] transition-all';
+            subDiv.innerHTML = `<span>${subId}</span><span class="text-[10px] text-slate-600">0/${sub ? sub.max : 2}</span>`;
+            itemsContainer.appendChild(subDiv);
+          });
+
+          rowDiv.appendChild(itemsContainer);
+          grid.appendChild(rowDiv);
+        });
+      }
+
+      loadPaulingForElement('H');
+    }
+
+    function loadPaulingForElement(symbol) {
+      const el = ELEMENTS[symbol];
+      if (!el) return;
+
+      const pSym = document.getElementById('pauling-elem-symbol');
+      if (pSym) pSym.textContent = el.symbol;
+
+      const pName = document.getElementById('pauling-elem-name');
+      if (pName) pName.textContent = el.name;
+
+      const pZ = document.getElementById('pauling-elem-z');
+      if (pZ) pZ.textContent = el.z;
+
+      const pVal = document.getElementById('pauling-elem-valencia');
+      if (pVal) pVal.textContent = `${el.valence} e⁻`;
+
+      const pSub = document.getElementById('pauling-sublevels-display');
+      if (pSub) pSub.textContent = el.subshells;
+
+      const pOct = document.getElementById('pauling-octet-explanation');
+      if (pOct) pOct.textContent = el.octetoRule;
+
+      const pType = document.getElementById('pauling-elem-type');
+      if (pType) pType.textContent = el.family.toUpperCase();
+
+      let remainingElectrons = el.z;
+      PAULING_SUBSHELLS.forEach(sub => {
+        const node = document.getElementById(`subshell-node-${sub.id}`);
+        if (!node) return;
+
+        if (remainingElectrons > 0) {
+          const taken = Math.min(remainingElectrons, sub.max);
+          remainingElectrons -= taken;
+          node.className = `px-3 py-1.5 rounded-lg border border-purple-500/60 bg-purple-950/40 font-mono text-xs text-purple-200 flex items-center justify-between gap-2 min-w-[70px] transition-all shadow-md shadow-purple-900/20`;
+          node.innerHTML = `<span>${sub.id}<sup>${taken}</sup></span><span class="text-[10px] text-purple-300 font-bold">${taken}/${sub.max}</span>`;
+        } else {
+          node.className = `px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-950 font-mono text-xs text-slate-500 flex items-center justify-between gap-2 min-w-[70px] transition-all`;
+          node.innerHTML = `<span>${sub.id}</span><span class="text-[10px] text-slate-600">0/${sub.max}</span>`;
+        }
+      });
+
+      const shellsContainer = document.getElementById('pauling-shells-grid');
+      if (shellsContainer) {
+        shellsContainer.innerHTML = '';
+        SHELL_NAMES.forEach(shell => {
+          const count = el.shells[shell] || 0;
+          const card = document.createElement('div');
+          card.className = `p-2 rounded-xl border ${count > 0 ? 'bg-indigo-950/30 border-indigo-500/40 text-indigo-300' : 'bg-slate-950 border-slate-800 text-slate-600'}`;
+          card.innerHTML = `
+            <div class="text-[10px] font-bold uppercase">${shell}</div>
+            <div class="text-sm font-mono font-black mt-0.5">${count}</div>
+          `;
+          shellsContainer.appendChild(card);
+        });
+      }
+    }
+
+    function sendPaulingElementToLab() {
+      const select = document.getElementById('pauling-element-select');
+      if (!select) return;
+      const sym = select.value;
+      switchTab('lab');
+      addAtomToBench(sym);
+      showToast(`Átomo de ${sym} adicionado à bancada!`, 'info');
+    }
+
+    function renderAtomPalette(filter = 'all') {
+      const container = document.getElementById('atom-palette-grid');
+      if (!container) return;
+      container.innerHTML = '';
+
+      Object.keys(ELEMENTS).forEach(sym => {
+        const el = ELEMENTS[sym];
+        if (filter !== 'all') {
+          if (filter === 'excecao' && el.family !== 'excecao') return;
+          if (filter === 'ametal' && el.family !== 'ametal') return;
+          if (filter === 'metal' && el.family !== 'metal') return;
+        }
+
+        const btn = document.createElement('button');
+        btn.onclick = () => addAtomToBench(sym);
+        btn.className = `p-2.5 rounded-xl border border-slate-800 bg-slate-950/80 hover:bg-slate-800/90 transition-all flex flex-col items-center group relative hover:scale-105 active:scale-95 text-left`;
+
+        let familyBg = 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+        let familyLabel = 'Ametal';
+        if (el.family === 'metal') {
+          familyBg = 'bg-amber-500/20 text-amber-400 border-amber-500/30';
+          familyLabel = 'Metal';
+        } else if (el.family === 'excecao') {
+          familyBg = 'bg-rose-500/20 text-rose-400 border-rose-500/30';
+          familyLabel = 'Exceção';
+        } else if (el.family === 'gas_nobre') {
+          familyBg = 'bg-purple-500/20 text-purple-400 border-purple-500/30';
+          familyLabel = 'Gás Nobre';
+        }
+
+        btn.innerHTML = `
+          <div class="flex justify-between items-center w-full text-[10px] text-slate-500 mb-0.5">
+            <span class="font-mono">Z=${el.z}</span>
+            <span class="px-1 py-0.2 rounded text-[9px] border ${familyBg}">${familyLabel}</span>
+          </div>
+          <div class="text-2xl font-extrabold my-0.5 font-mono" style="color: ${el.color}">${el.symbol}</div>
+          <div class="text-[11px] font-medium text-slate-300 truncate w-full text-center">${el.name}</div>
+          <div class="text-[10px] text-indigo-400 mt-1">Valência: <strong>${el.valence} e⁻</strong></div>
+        `;
+        container.appendChild(btn);
+      });
+    }
+
+    function filterElementPalette(type, btnElement) {
+      document.querySelectorAll('.palette-filter').forEach(b => {
+        b.className = 'palette-filter bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-lg text-[11px]';
+      });
+      if (btnElement) {
+        btnElement.className = 'palette-filter bg-indigo-600/30 border border-indigo-500/50 text-indigo-300 px-2.5 py-1 rounded-lg text-[11px]';
+      }
+      renderAtomPalette(type);
+    }
+
+    function addAtomToBench(symbol) {
+      if (gameState.selectedAtoms.length >= 6) {
+        showToast('Bancada cheia! Limpe ou combine os átomos atuais.', 'warning');
+        playErrorSound();
+        return;
+      }
+      gameState.selectedAtoms.push(symbol);
+      playAddAtomSound();
+      updateBenchUI();
+    }
+
+    function removeAtomFromBench(index) {
+      gameState.selectedAtoms.splice(index, 1);
+      playTone(330, 'sine', 0.05);
+      updateBenchUI();
+    }
+
+    function clearSelectedAtoms() {
+      gameState.selectedAtoms = [];
+      updateBenchUI();
+      const card = document.getElementById('reaction-result-card');
+      if (card) card.classList.add('hidden');
+    }
+
+    function resetLab() {
+      clearSelectedAtoms();
+      showToast('Bancada reiniciada!', 'info');
+    }
+
+    function triggerAutoCombination(el1, el2) {
+      clearSelectedAtoms();
+      addAtomToBench(el1);
+      addAtomToBench(el2);
+      showToast(`Átomos de ${el1} e ${el2} preparados na bancada!`, 'info');
+    }
+
+    function updateBenchUI() {
+      const container = document.getElementById('reaction-staging');
+      const btnSynthesize = document.getElementById('btn-synthesize');
+      if (!container) return;
+
+      if (gameState.selectedAtoms.length === 0) {
+        container.innerHTML = `
+          <div class="text-center text-slate-500 text-xs py-6">
+            <i class="fa-solid fa-hand-pointer text-2xl mb-2 block opacity-40"></i>
+            Nenhum átomo na bancada. Clique nos elementos à esquerda para começar!
+          </div>
+        `;
+        if (btnSynthesize) btnSynthesize.disabled = true;
+        return;
+      }
+
+      if (btnSynthesize) btnSynthesize.disabled = false;
+      container.innerHTML = '';
+
+      gameState.selectedAtoms.forEach((sym, idx) => {
+        const el = ELEMENTS[sym];
+        const atomDiv = document.createElement('div');
+        atomDiv.className = `relative group flex flex-col items-center justify-center p-3 rounded-2xl bg-slate-900 border border-slate-700 shadow-md transform transition hover:scale-105`;
+        atomDiv.innerHTML = `
+          <button onclick="removeAtomFromBench(${idx})" title="Remover átomo" class="absolute -top-1.5 -right-1.5 bg-rose-500 hover:bg-rose-600 text-white w-5 h-5 rounded-full text-[10px] flex items-center justify-center shadow">
+            <i class="fa-solid fa-times"></i>
+          </button>
+          <div class="w-12 h-12 rounded-full flex items-center justify-center text-xl font-black font-mono border-2 shadow-inner" style="border-color: ${el.color}; color: ${el.color}; background: rgba(15,23,42,0.7)">
+            ${el.symbol}
+          </div>
+          <span class="text-[10px] font-semibold text-slate-300 mt-1">${el.name}</span>
+          <span class="text-[9px] text-slate-400 font-mono">${el.valence} e⁻ valência</span>
+        `;
+        container.appendChild(atomDiv);
+      });
+    }
+
+    function synthesizeBond() {
+      if (gameState.selectedAtoms.length < 2) {
+        showToast('Selecione pelo menos 2 átomos para formar uma ligação!', 'warning');
+        playErrorSound();
+        return;
+      }
+
+      const counts = {};
+      gameState.selectedAtoms.forEach(s => counts[s] = (counts[s] || 0) + 1);
+
+      const matchedRecipe = RECIPES.find(recipe => {
+        const recipeKeys = Object.keys(recipe.atoms);
+        const currentKeys = Object.keys(counts);
+        if (recipeKeys.length !== currentKeys.length) return false;
+        return recipeKeys.every(k => counts[k] === recipe.atoms[k]);
+      });
+
+      const resultCard = document.getElementById('reaction-result-card');
+      if (!resultCard) return;
+      resultCard.classList.remove('hidden');
+
+      if (matchedRecipe) {
+        playSuccessSound();
+        gameState.lastFormedRecipe = matchedRecipe;
+
+        const isFirstTime = !gameState.discoveredRecipes.has(matchedRecipe.id);
+        if (isFirstTime) {
+          gameState.discoveredRecipes.add(matchedRecipe.id);
+          addXp(matchedRecipe.xp);
+          showToast(`Nova substância descoberta! +${matchedRecipe.xp} XP`, 'success');
+        } else {
+          addXp(10);
+          showToast(`Ligação realizada novamente! +10 XP`, 'info');
+        }
+
+        checkMissions(matchedRecipe.id);
+        renderReactionResult(matchedRecipe);
+      } else {
+        playErrorSound();
+        renderReactionFailure(counts);
+      }
+    }
+
+    function renderReactionResult(recipe) {
+      const resultCard = document.getElementById('reaction-result-card');
+      if (!resultCard) return;
+
+      let typeBadge = '';
+      let glowClass = '';
+      if (recipe.category === 'ionic') {
+        typeBadge = '<span class="px-3 py-1 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-full text-xs font-semibold">Ligação Iônica</span>';
+        glowClass = 'glow-ionic';
+      } else if (recipe.category === 'covalent') {
+        typeBadge = '<span class="px-3 py-1 bg-blue-500/20 text-blue-300 border border-blue-500/30 rounded-full text-xs font-semibold">Ligação Covalente</span>';
+        glowClass = 'glow-covalent';
+      } else {
+        typeBadge = '<span class="px-3 py-1 bg-purple-500/20 text-purple-300 border border-purple-500/30 rounded-full text-xs font-semibold">Ligação Metálica</span>';
+        glowClass = 'glow-metallic';
+      }
+
+      resultCard.className = `bg-slate-900 border border-slate-700/80 rounded-2xl p-6 transition-all duration-500 shadow-2xl ${glowClass}`;
+
+      resultCard.innerHTML = `
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4 mb-4">
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              ${typeBadge}
+              <span class="text-xs text-emerald-400 font-semibold"><i class="fa-solid fa-circle-check mr-1"></i> Octeto Satisfeito</span>
+            </div>
+            <h3 class="text-xl sm:text-2xl font-black text-white font-mono tracking-tight">${recipe.name} (${recipe.formula})</h3>
+          </div>
+          <button onclick="openLewisModal('${recipe.id}')" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition flex items-center gap-2 self-start sm:self-center shadow-lg shadow-indigo-600/30 active:scale-95">
+            <i class="fa-solid fa-cube text-sm"></i> Ver Molécula em 3D & Lewis
+          </button>
+        </div>
+
+        <p class="text-sm text-slate-300 mb-5 leading-relaxed bg-slate-950/60 p-3.5 rounded-xl border border-slate-800">
+          ${recipe.desc}
+        </p>
+
+        <h4 class="text-xs uppercase font-bold tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
+          <i class="fa-solid fa-vial-circle-check text-indigo-400"></i> Propriedades Físico-Químicas Desta Substância:
+        </h4>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+            <span class="text-[10px] text-slate-400 uppercase font-medium block">Ponto de Fusão / PE</span>
+            <span class="text-xs font-bold text-slate-200 mt-0.5 block">${recipe.properties.pf}</span>
+          </div>
+          <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+            <span class="text-[10px] text-slate-400 uppercase font-medium block">Condutividade Elétrica</span>
+            <span class="text-xs font-bold text-indigo-300 mt-0.5 block">${recipe.properties.conduct}</span>
+          </div>
+          <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+            <span class="text-[10px] text-slate-400 uppercase font-medium block">Solubilidade</span>
+            <span class="text-xs font-bold text-slate-200 mt-0.5 block">${recipe.properties.solubility}</span>
+          </div>
+          <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+            <span class="text-[10px] text-slate-400 uppercase font-medium block">Estado Físico (25°C)</span>
+            <span class="text-xs font-bold text-emerald-300 mt-0.5 block">${recipe.properties.state}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderReactionFailure(counts) {
+      const resultCard = document.getElementById('reaction-result-card');
+      if (!resultCard) return;
+      resultCard.className = `bg-slate-900 border border-rose-900/50 rounded-2xl p-6 transition-all duration-500 shadow-xl`;
+
+      const formulaParts = Object.keys(counts).map(k => `${k}${counts[k] > 1 ? counts[k] : ''}`).join('');
+
+      resultCard.innerHTML = `
+        <div class="flex items-center gap-3 border-b border-slate-800 pb-3 mb-4">
+          <div class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center font-bold text-xl border border-rose-500/30">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-white">Combinação Inestável (${formulaParts})</h3>
+            <span class="text-xs text-rose-400 font-medium">Os átomos não atingiram estabilidade pelo octeto com essa proporção</span>
+          </div>
+        </div>
+
+        <p class="text-xs sm:text-sm text-slate-300 leading-relaxed mb-4">
+          Para que uma molécula ou retículo cristalino se forme, a transferência ou compartilhamento de elétrons deve 
+          completar a camada de valência dos elementos envolvidos (geralmente 8 elétrons, ou 2 para o Hidrogênio).
+        </p>
+
+        <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs text-slate-400 flex items-center gap-2">
+          <i class="fa-solid fa-lightbulb text-amber-400 text-base"></i>
+          <span>Tente combinações clássicas como: <strong>H + Cl</strong>, <strong>Na + Cl</strong>, <strong>H + H + O</strong>, ou <strong>Fe + Fe</strong>.</span>
+        </div>
+      `;
+    }
+
+    let threeScene, threeCamera, threeRenderer, threeGroup, threeAnimId;
+    let isAutoRotating = true;
+    let isDragging = false;
+    let previousMousePosition = { x: 0, y: 0 };
+    let current3DRecipe = null;
+
+    function start3DAnimation() {
+      if (threeAnimId) {
+        cancelAnimationFrame(threeAnimId);
+        threeAnimId = null;
+      }
+      const animate = () => {
+        threeAnimId = requestAnimationFrame(animate);
+        if (isAutoRotating && threeGroup && !isDragging) {
+          threeGroup.rotation.y += 0.012;
+          threeGroup.rotation.x += 0.004;
+        }
+        if (threeRenderer && threeScene && threeCamera) {
+          threeRenderer.render(threeScene, threeCamera);
+        }
+      };
+      animate();
+    }
+
+    function stop3DAnimation() {
+      if (threeAnimId) {
+        cancelAnimationFrame(threeAnimId);
+        threeAnimId = null;
+      }
+    }
+
+    function closeLewisModal() {
+      const modal = document.getElementById('lewis-modal');
+      if (modal) modal.classList.add('hidden');
+      stop3DAnimation();
+    }
+
+    function switchModalTab(tab) {
+      const tab3D = document.getElementById('modal-tab-3d-view');
+      const tab2D = document.getElementById('modal-tab-2d-view');
+      const btn3D = document.getElementById('btn-tab-3d');
+      const btn2D = document.getElementById('btn-tab-2d');
+
+      if (!tab3D || !tab2D || !btn3D || !btn2D) return;
+
+      if (tab === '3d') {
+        tab3D.classList.remove('hidden');
+        tab2D.classList.add('hidden');
+        btn3D.className = 'px-3.5 py-1.5 text-xs font-bold border-b-2 border-indigo-500 text-indigo-400 flex items-center gap-1.5 transition';
+        btn2D.className = 'px-3.5 py-1.5 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-1.5 transition';
+        if (current3DRecipe) {
+          setTimeout(initOrUpdate3DScene, 50);
+        }
+      } else {
+        tab2D.classList.remove('hidden');
+        tab3D.classList.add('hidden');
+        btn2D.className = 'px-3.5 py-1.5 text-xs font-bold border-b-2 border-indigo-500 text-indigo-400 flex items-center gap-1.5 transition';
+        btn3D.className = 'px-3.5 py-1.5 text-xs font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-1.5 transition';
+        stop3DAnimation();
+      }
+    }
+
+    function toggle3DRotation() {
+      isAutoRotating = !isAutoRotating;
+      const icon = document.getElementById('rotate-icon');
+      if (icon) {
+        if (isAutoRotating) {
+          icon.className = 'fa-solid fa-pause text-[10px]';
+          showToast('Rotação automática ativada', 'info');
+        } else {
+          icon.className = 'fa-solid fa-play text-[10px]';
+          showToast('Rotação automática pausada', 'info');
+        }
+      }
+    }
+
+    function reset3DCamera() {
+      if (threeGroup) threeGroup.rotation.set(0, 0, 0);
+      if (threeCamera) threeCamera.position.set(0, 0, 5.5);
+      if (threeRenderer && threeScene && threeCamera) {
+        threeRenderer.render(threeScene, threeCamera);
+      }
+    }
+
+    function openLewisModal(recipeId) {
+      const recipe = RECIPES.find(r => r.id === recipeId);
+      if (!recipe) return;
+
+      current3DRecipe = recipe;
+
+      const mTitle = document.getElementById('modal-compound-title');
+      if (mTitle) mTitle.textContent = `${recipe.name} (${recipe.formula})`;
+
+      const mSub = document.getElementById('modal-compound-subtitle');
+      if (mSub) mSub.textContent = `Geometria: ${recipe.geometry} • Ângulo: ${recipe.bondAngle}`;
+
+      const lGeom = document.getElementById('label-geometry');
+      if (lGeom) lGeom.innerHTML = `<i class="fa-solid fa-shapes mr-1"></i> Geometria: ${recipe.geometry}`;
+
+      const lAngle = document.getElementById('label-angle');
+      if (lAngle) lAngle.innerHTML = `<i class="fa-solid fa-drafting-compass mr-1"></i> Ângulo: ${recipe.bondAngle}`;
+
+      const legendContainer = document.getElementById('modal-3d-atoms-legend');
+      if (legendContainer) {
+        legendContainer.innerHTML = '';
+        Object.keys(recipe.atoms).forEach(sym => {
+          const el = ELEMENTS[sym];
+          if (!el) return;
+          const badge = document.createElement('div');
+          badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-[11px]';
+          badge.innerHTML = `
+            <span class="w-3 h-3 rounded-full" style="background-color: ${el.color}"></span>
+            <span class="font-bold text-slate-200">${el.name} (${sym})</span>
+          `;
+          legendContainer.appendChild(badge);
+        });
+      }
+
+      const container2D = document.getElementById('modal-interactive-canvas-container');
+      if (container2D) {
+        let visualHtml = '';
+        if (recipe.id === 'HCl') {
+          visualHtml = `
+            <div class="flex items-center gap-6 text-3xl font-mono font-bold">
+              <div class="flex flex-col items-center">
+                <span class="text-blue-400">H</span>
+                <span class="text-[10px] text-slate-400">1s¹</span>
+              </div>
+              <div class="flex flex-col items-center">
+                <div class="flex items-center gap-1 text-emerald-400 font-black text-xl">
+                  <span>•</span><span>•</span>
+                </div>
+                <span class="text-[10px] text-slate-400 uppercase tracking-wider">Par compartilhado</span>
+              </div>
+              <div class="relative p-3 border-2 border-emerald-500/40 rounded-xl bg-emerald-950/20 flex flex-col items-center">
+                <span class="text-green-400">Cl</span>
+                <div class="text-[11px] text-emerald-300 mt-1">Octeto completo (8 e⁻)</div>
+              </div>
+            </div>
+          `;
+        } else if (recipe.id === 'NaCl') {
+          visualHtml = `
+            <div class="flex items-center gap-6 text-2xl font-mono font-bold">
+              <div class="p-4 border-2 border-amber-500/40 rounded-2xl bg-amber-950/20 text-center">
+                <span class="text-amber-300">[ Na ]⁺</span>
+                <span class="block text-[10px] text-amber-400 font-sans mt-1">Perdeu 1 e⁻ (Cátion)</span>
+              </div>
+              <div class="text-indigo-400 text-lg animate-pulse">
+                <i class="fa-solid fa-arrow-right"></i>
+              </div>
+              <div class="p-4 border-2 border-emerald-500/40 rounded-2xl bg-emerald-950/20 text-center">
+                <span class="text-emerald-300">[ :Cl̈: ]⁻</span>
+                <span class="block text-[10px] text-emerald-400 font-sans mt-1">Recebeu 1 e⁻ (Ânion)</span>
+              </div>
+            </div>
+          `;
+        } else if (recipe.id === 'H2O') {
+          visualHtml = `
+            <div class="flex flex-col items-center font-mono">
+              <div class="text-rose-400 text-xs mb-1">•• (Pares livres)</div>
+              <div class="flex items-center gap-4 text-2xl font-bold">
+                <span class="text-blue-400">H</span>
+                <span class="text-slate-400 font-light">—</span>
+                <span class="text-rose-400 font-black text-3xl">O</span>
+                <span class="text-slate-400 font-light">—</span>
+                <span class="text-blue-400">H</span>
+              </div>
+              <div class="text-rose-400 text-xs mt-1">•• (Pares livres)</div>
+              <span class="text-[11px] text-slate-400 font-sans mt-3">Geometria Angular (104.5°) devido à repulsão dos elétrons não ligantes</span>
+            </div>
+          `;
+        } else if (recipe.category === 'metallic') {
+          visualHtml = `
+            <div class="w-full text-center">
+              <div class="flex justify-center gap-3 my-2">
+                <div class="w-10 h-10 rounded-full bg-purple-600/40 border border-purple-400 text-purple-200 flex items-center justify-center font-bold text-sm">${recipe.id.replace('2','')}²⁺</div>
+                <div class="w-10 h-10 rounded-full bg-purple-600/40 border border-purple-400 text-purple-200 flex items-center justify-center font-bold text-sm">${recipe.id.replace('2','')}²⁺</div>
+                <div class="w-10 h-10 rounded-full bg-purple-600/40 border border-purple-400 text-purple-200 flex items-center justify-center font-bold text-sm">${recipe.id.replace('2','')}²⁺</div>
+              </div>
+              <div class="text-cyan-300 font-mono text-xs flex justify-around py-1 animate-electron-sea">
+                <span>e⁻ ~</span><span>~ e⁻</span><span>e⁻ ~</span><span>~ e⁻</span>
+              </div>
+              <span class="text-[11px] text-purple-300 font-sans block mt-2">Mar de Elétrons Deslocalizados: confere brilho, condução elétrica e maleabilidade</span>
+            </div>
+          `;
+        } else {
+          visualHtml = `
+            <div class="text-center font-mono text-xl font-bold text-indigo-300">
+              ${recipe.lewisText}
+              <div class="text-xs font-sans text-slate-400 font-normal mt-3">Representação esquemática do arranjo de pares eletrônicos compartilhados</div>
+            </div>
+          `;
+        }
+        container2D.innerHTML = visualHtml;
+      }
+
+      const mDetails = document.getElementById('modal-compound-details');
+      if (mDetails) {
+        mDetails.innerHTML = `
+          <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
+            <strong class="text-indigo-400 font-semibold block mb-1">Mecanismo de Valência & Octeto:</strong>
+            <p class="text-slate-300 leading-relaxed">${recipe.desc}</p>
+          </div>
+        `;
+      }
+
+      switchModalTab('3d');
+      const modal = document.getElementById('lewis-modal');
+      if (modal) modal.classList.remove('hidden');
+
+      setTimeout(initOrUpdate3DScene, 60);
+    }
+
+    function createBondCylinder(p1, p2, radius = 0.08, color = 0x94a3b8) {
+      if (typeof THREE === 'undefined') return new THREE.Group();
+      const dir = new THREE.Vector3().subVectors(p2, p1);
+      const len = dir.length();
+      const geom = new THREE.CylinderGeometry(radius, radius, len, 16);
+      const mat = new THREE.MeshPhongMaterial({ color: color, shininess: 80 });
+      const cylinder = new THREE.Mesh(geom, mat);
+
+      cylinder.position.copy(p1).addScaledVector(dir, 0.5);
+      cylinder.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
+      return cylinder;
+    }
+
+    function createAtomSphere(position, radius, hexColor) {
+      if (typeof THREE === 'undefined') return new THREE.Group();
+      const geom = new THREE.SphereGeometry(radius, 32, 32);
+      const mat = new THREE.MeshPhongMaterial({
+        color: hexColor,
+        specular: 0x666666,
+        shininess: 90,
+        emissive: hexColor,
+        emissiveIntensity: 0.15
+      });
+      const mesh = new THREE.Mesh(geom, mat);
+      mesh.position.set(position.x, position.y, position.z);
+      return mesh;
+    }
+
+    function initOrUpdate3DScene() {
+      const canvas = document.getElementById('molecule-3d-canvas');
+      if (!canvas || !current3DRecipe || typeof THREE === 'undefined') return;
+
+      const rect = canvas.parentElement.getBoundingClientRect();
+      const width = rect.width || 320;
+      const height = rect.height || 260;
+
+      if (!threeRenderer) {
+        threeScene = new THREE.Scene();
+        threeCamera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+        threeCamera.position.set(0, 0, 5.5);
+
+        threeRenderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+        threeRenderer.setSize(width, height);
+        threeRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+
+        const ambLight = new THREE.AmbientLight(0xffffff, 0.9);
+        threeScene.add(ambLight);
+
+        const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.85);
+        dirLight1.position.set(5, 8, 5);
+        threeScene.add(dirLight1);
+
+        const dirLight2 = new THREE.DirectionalLight(0x6366f1, 0.4);
+        dirLight2.position.set(-5, -4, -5);
+        threeScene.add(dirLight2);
+
+        threeGroup = new THREE.Group();
+        threeScene.add(threeGroup);
+
+        setup3DControls(canvas);
+      } else {
+        threeRenderer.setSize(width, height);
+        threeCamera.aspect = width / height;
+        threeCamera.updateProjectionMatrix();
+      }
+
+      buildCurrent3DMolecule();
+      threeRenderer.render(threeScene, threeCamera);
+      start3DAnimation();
+    }
+
+    function setup3DControls(canvas) {
+      const onStart = (x, y) => {
+        isDragging = true;
+        previousMousePosition = { x, y };
+      };
+
+      const onMove = (x, y) => {
+        if (!isDragging || !threeGroup) return;
+        const deltaX = x - previousMousePosition.x;
+        const deltaY = y - previousMousePosition.y;
+
+        threeGroup.rotation.y += deltaX * 0.01;
+        threeGroup.rotation.x += deltaY * 0.01;
+
+        previousMousePosition = { x, y };
+        if (threeRenderer && threeScene && threeCamera) {
+          threeRenderer.render(threeScene, threeCamera);
+        }
+      };
+
+      const onEnd = () => {
+        isDragging = false;
+      };
+
+      canvas.addEventListener('mousedown', e => onStart(e.clientX, e.clientY));
+      window.addEventListener('mousemove', e => onMove(e.clientX, e.clientY));
+      window.addEventListener('mouseup', onEnd);
+
+      canvas.addEventListener('touchstart', e => {
+        if (e.touches && e.touches.length === 1) {
+          onStart(e.touches[0].clientX, e.touches[0].clientY);
+        }
+      }, { passive: true });
+
+      window.addEventListener('touchmove', e => {
+        if (e.touches && e.touches.length === 1) {
+          onMove(e.touches[0].clientX, e.touches[0].clientY);
+        }
+      }, { passive: true });
+
+      window.addEventListener('touchend', onEnd);
+    }
+
+    function buildCurrent3DMolecule() {
+      if (!threeGroup || typeof THREE === 'undefined' || !current3DRecipe) return;
+
+      while (threeGroup.children.length > 0) {
+        const obj = threeGroup.children[0];
+        if (obj.geometry) obj.geometry.dispose();
+        if (obj.material) {
+          if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose());
+          else obj.material.dispose();
+        }
+        threeGroup.remove(obj);
+      }
+
+      threeGroup.rotation.set(0, 0, 0);
+
+      const id = current3DRecipe.id;
+      const CPK = {
+        H: 0x93c5fd,  // Azul bem claro / gelo
+        O: 0xef4444,  // Vermelho vívido
+        N: 0x3b82f6,  // Azul cobalto
+        C: 0x334155,  // Grafite escuro / Carvão
+        Cl: 0x22c55e, // Verde
+        Na: 0xf59e0b, // Âmbar
+        Mg: 0xfacc15, // Amarelo
+        Ca: 0xf97316, // Laranja
+        B: 0x10b981,  // Verde esmeralda
+        Be: 0xd97706, // Ocre dourado
+        F: 0x06b6d4,  // Ciano
+        Fe: 0xa855f7, // Púrpura metálico
+        Cu: 0xb45309  // Cobre bronze
+      };
+
+      if (id === 'CO2') {
+        const pC = new THREE.Vector3(0, 0, 0);
+        const pO1 = new THREE.Vector3(-1.45, 0, 0);
+        const pO2 = new THREE.Vector3(1.45, 0, 0);
+
+        threeGroup.add(createAtomSphere(pC, 0.62, CPK.C));
+        threeGroup.add(createAtomSphere(pO1, 0.68, CPK.O));
+        threeGroup.add(createAtomSphere(pO2, 0.68, CPK.O));
+
+        const offset = 0.12;
+        threeGroup.add(createBondCylinder(new THREE.Vector3(0, offset, 0), new THREE.Vector3(-1.45, offset, 0), 0.05, 0x94a3b8));
+        threeGroup.add(createBondCylinder(new THREE.Vector3(0, -offset, 0), new THREE.Vector3(-1.45, -offset, 0), 0.05, 0x94a3b8));
+        threeGroup.add(createBondCylinder(new THREE.Vector3(0, offset, 0), new THREE.Vector3(1.45, offset, 0), 0.05, 0x94a3b8));
+        threeGroup.add(createBondCylinder(new THREE.Vector3(0, -offset, 0), new THREE.Vector3(1.45, -offset, 0), 0.05, 0x94a3b8));
+
+      } else if (id === 'HCl') {
+        const p1 = new THREE.Vector3(-0.9, 0, 0);
+        const p2 = new THREE.Vector3(0.8, 0, 0);
+        threeGroup.add(createAtomSphere(p1, 0.4, CPK.H));
+        threeGroup.add(createAtomSphere(p2, 0.75, CPK.Cl));
+        threeGroup.add(createBondCylinder(p1, p2, 0.08, 0x94a3b8));
+
+      } else if (id === 'H2O') {
+        const pO = new THREE.Vector3(0, 0.35, 0);
+        const pH1 = new THREE.Vector3(-1.0, -0.45, 0);
+        const pH2 = new THREE.Vector3(1.0, -0.45, 0);
+
+        threeGroup.add(createAtomSphere(pO, 0.7, CPK.O));
+        threeGroup.add(createAtomSphere(pH1, 0.4, CPK.H));
+        threeGroup.add(createAtomSphere(pH2, 0.4, CPK.H));
+        threeGroup.add(createBondCylinder(pO, pH1, 0.07, 0x94a3b8));
+        threeGroup.add(createBondCylinder(pO, pH2, 0.07, 0x94a3b8));
+
+      } else if (id === 'CH4') {
+        const pC = new THREE.Vector3(0, 0, 0);
+        threeGroup.add(createAtomSphere(pC, 0.65, CPK.C));
+
+        const d = 1.15;
+        const hCoords = [
+          new THREE.Vector3(d, d, d).normalize().multiplyScalar(1.3),
+          new THREE.Vector3(-d, -d, d).normalize().multiplyScalar(1.3),
+          new THREE.Vector3(-d, d, -d).normalize().multiplyScalar(1.3),
+          new THREE.Vector3(d, -d, -d).normalize().multiplyScalar(1.3)
+        ];
+
+        hCoords.forEach(pos => {
+          threeGroup.add(createAtomSphere(pos, 0.38, CPK.H));
+          threeGroup.add(createBondCylinder(pC, pos, 0.06, 0x94a3b8));
+        });
+
+      } else if (id === 'NH3') {
+        const pN = new THREE.Vector3(0, 0.45, 0);
+        threeGroup.add(createAtomSphere(pN, 0.7, CPK.N));
+
+        const r = 1.15;
+        const y = -0.4;
+        const hPositions = [
+          new THREE.Vector3(0, y, r),
+          new THREE.Vector3(r * Math.cos(Math.PI / 6), y, -r * Math.sin(Math.PI / 6)),
+          new THREE.Vector3(-r * Math.cos(Math.PI / 6), y, -r * Math.sin(Math.PI / 6))
+        ];
+
+        hPositions.forEach(pos => {
+          threeGroup.add(createAtomSphere(pos, 0.38, CPK.H));
+          threeGroup.add(createBondCylinder(pN, pos, 0.06, 0x94a3b8));
+        });
+
+      } else if (id === 'BF3') {
+        const pB = new THREE.Vector3(0, 0, 0);
+        threeGroup.add(createAtomSphere(pB, 0.6, CPK.B));
+
+        const dist = 1.35;
+        const angles = [0, (2 * Math.PI) / 3, (4 * Math.PI) / 3];
+        angles.forEach(ang => {
+          const pF = new THREE.Vector3(dist * Math.cos(ang), dist * Math.sin(ang), 0);
+          threeGroup.add(createAtomSphere(pF, 0.5, CPK.F));
+          threeGroup.add(createBondCylinder(pB, pF, 0.06, 0x94a3b8));
+        });
+
+      } else if (id === 'BeCl2') {
+        const pBe = new THREE.Vector3(0, 0, 0);
+        const pCl1 = new THREE.Vector3(-1.6, 0, 0);
+        const pCl2 = new THREE.Vector3(1.6, 0, 0);
+
+        threeGroup.add(createAtomSphere(pBe, 0.5, CPK.Be));
+        threeGroup.add(createAtomSphere(pCl1, 0.7, CPK.Cl));
+        threeGroup.add(createAtomSphere(pCl2, 0.7, CPK.Cl));
+        threeGroup.add(createBondCylinder(pBe, pCl1, 0.07, 0x94a3b8));
+        threeGroup.add(createBondCylinder(pBe, pCl2, 0.07, 0x94a3b8));
+
+      } else if (id === 'O2') {
+        const p1 = new THREE.Vector3(-0.8, 0, 0);
+        const p2 = new THREE.Vector3(0.8, 0, 0);
+        threeGroup.add(createAtomSphere(p1, 0.65, CPK.O));
+        threeGroup.add(createAtomSphere(p2, 0.65, CPK.O));
+        threeGroup.add(createBondCylinder(new THREE.Vector3(-0.8, 0.12, 0), new THREE.Vector3(0.8, 0.12, 0), 0.05, 0x94a3b8));
+        threeGroup.add(createBondCylinder(new THREE.Vector3(-0.8, -0.12, 0), new THREE.Vector3(0.8, -0.12, 0), 0.05, 0x94a3b8));
+
+      } else if (id === 'N2') {
+        const p1 = new THREE.Vector3(-0.8, 0, 0);
+        const p2 = new THREE.Vector3(0.8, 0, 0);
+        threeGroup.add(createAtomSphere(p1, 0.65, CPK.N));
+        threeGroup.add(createAtomSphere(p2, 0.65, CPK.N));
+        threeGroup.add(createBondCylinder(new THREE.Vector3(-0.8, 0.15, 0), new THREE.Vector3(0.8, 0.15, 0), 0.04, 0x94a3b8));
+        threeGroup.add(createBondCylinder(new THREE.Vector3(-0.8, 0, 0), new THREE.Vector3(0.8, 0, 0), 0.04, 0x94a3b8));
+        threeGroup.add(createBondCylinder(new THREE.Vector3(-0.8, -0.15, 0), new THREE.Vector3(0.8, -0.15, 0), 0.04, 0x94a3b8));
+
+      } else if (id === 'NaCl' || id === 'CaO') {
+        const isCaO = (id === 'CaO');
+        const cCat = isCaO ? CPK.Ca : CPK.Na;
+        const cAni = isCaO ? CPK.O : CPK.Cl;
+        const rCat = 0.38;
+        const rAni = 0.52;
+        const s = 0.85;
+
+        for (let x = -1; x <= 1; x += 2) {
+          for (let y = -1; y <= 1; y += 2) {
+            for (let z = -1; z <= 1; z += 2) {
+              const isEven = ((x + y + z) / 2) % 2 === 0;
+              const pos = new THREE.Vector3(x * s, y * s, z * s);
+              const mesh = createAtomSphere(pos, isEven ? rCat : rAni, isEven ? cCat : cAni);
+              threeGroup.add(mesh);
+            }
+          }
+        }
+
+        const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x6366f1, transparent: true, opacity: 0.35 });
+        const boxGeom = new THREE.BoxGeometry(2 * s, 2 * s, 2 * s);
+        const wireframe = new THREE.LineSegments(new THREE.EdgesGeometry(boxGeom), edgeMaterial);
+        threeGroup.add(wireframe);
+
+      } else if (id === 'MgCl2') {
+        const pMg = new THREE.Vector3(0, 0, 0);
+        const pCl1 = new THREE.Vector3(-1.5, 0, 0);
+        const pCl2 = new THREE.Vector3(1.5, 0, 0);
+
+        threeGroup.add(createAtomSphere(pMg, 0.55, CPK.Mg));
+        threeGroup.add(createAtomSphere(pCl1, 0.7, CPK.Cl));
+        threeGroup.add(createAtomSphere(pCl2, 0.7, CPK.Cl));
+
+        threeGroup.add(createBondCylinder(pMg, pCl1, 0.04, 0xfacc15));
+        threeGroup.add(createBondCylinder(pMg, pCl2, 0.04, 0xfacc15));
+
+      } else if (current3DRecipe.category === 'metallic') {
+        const colorMetal = id === 'Cu2' ? CPK.Cu : CPK.Fe;
+        const s = 0.9;
+
+        [-s, s].forEach(x => {
+          [-s, s].forEach(y => {
+            [-s, s].forEach(z => {
+              const pos = new THREE.Vector3(x, y, z);
+              threeGroup.add(createAtomSphere(pos, 0.45, colorMetal));
+            });
+          });
+        });
+
+        const electronGeom = new THREE.SphereGeometry(0.06, 8, 8);
+        const electronMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+        for (let i = 0; i < 28; i++) {
+          const eMesh = new THREE.Mesh(electronGeom, electronMat);
+          eMesh.position.set(
+            (Math.random() - 0.5) * 2.8,
+            (Math.random() - 0.5) * 2.8,
+            (Math.random() - 0.5) * 2.8
+          );
+          threeGroup.add(eMesh);
+        }
+      }
+    }
+
+    function enterLaboratory() {
+      const nameInput = document.getElementById('student-name-input');
+      if (nameInput && nameInput.value.trim()) {
+        gameState.studentName = nameInput.value.trim();
+        const pLabel = document.getElementById('player-label');
+        if (pLabel) pLabel.textContent = gameState.studentName;
+      }
+      const modal = document.getElementById('welcome-modal');
+      if (modal) modal.classList.add('hidden');
+      playSuccessSound();
+      showToast(`Bem-vindo ao QuimiLab da Escola Agenor Guerra, ${gameState.studentName}!`, 'success');
+    }
+
+    function openWelcomeInfo() {
+      const modal = document.getElementById('welcome-modal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('border-indigo-500', 'text-indigo-400');
+        btn.classList.add('border-transparent', 'text-slate-400');
+      });
+
+      document.querySelectorAll('.mobile-nav-item').forEach(btn => {
+        btn.classList.remove('text-indigo-400');
+        btn.classList.add('text-slate-400');
+      });
+
+      const activeContent = document.getElementById(`view-${tabId}`);
+      const activeButton = document.getElementById(`tab-${tabId}`);
+      const activeMobileNav = document.getElementById(`mobile-nav-${tabId}`);
+
+      if (activeContent) activeContent.classList.remove('hidden');
+      if (activeButton) {
+        activeButton.classList.add('border-indigo-500', 'text-indigo-400');
+        activeButton.classList.remove('border-transparent', 'text-slate-400');
+      }
+      if (activeMobileNav) {
+        activeMobileNav.classList.add('text-indigo-400');
+        activeMobileNav.classList.remove('text-slate-400');
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      playTone(400, 'sine', 0.04);
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+
+      const toast = document.createElement('div');
+      let borderClass = 'border-indigo-500/50 text-indigo-200';
+      let icon = 'fa-info-circle';
+      if (type === 'success') {
+        borderClass = 'border-emerald-500/50 text-emerald-200';
+        icon = 'fa-circle-check';
+      } else if (type === 'warning') {
+        borderClass = 'border-amber-500/50 text-amber-200';
+        icon = 'fa-triangle-exclamation';
+      }
+
+      toast.className = `pointer-events-auto flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-slate-900/95 border ${borderClass} shadow-xl backdrop-blur-sm text-xs transition-all duration-300 transform translate-y-2 opacity-0`;
+      toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${message}</span>`;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      }, 10);
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-x-4');
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    /* Resilient safe bootstrap */
+    function initializeQuimiLab() {
+      try {
+        renderAtomPalette('all');
+      } catch (e) {
+        console.error('Error in renderAtomPalette:', e);
+      }
+
+      try {
+        renderMissionsList();
+      } catch (e) {
+        console.error('Error in renderMissionsList:', e);
+      }
+
+      try {
+        initPaulingView();
+      } catch (e) {
+        console.error('Error in initPaulingView:', e);
+      }
+
+      try {
+        updateGamificationUI();
+      } catch (e) {
+        console.error('Error in updateGamificationUI:', e);
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initializeQuimiLab);
+    } else {
+      initializeQuimiLab();
+    }
+  </script>
+</body>
+</html>
